@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/rogozhka/query"
 	"log"
 	"net/http"
 	"os"
@@ -62,35 +63,14 @@ func (a Action) tick() {
 	}
 	defer db.Close()
 
-	rows, err := db.Query(a.Query)
+	// fetch all the rows into slice of map[string]string
+	rows, err := query.Fetch(a.Query, db)
 	if err != nil {
-		log.Fatalf("query %s: %v", a.Query, err)
+		panic(err)
 	}
 
-	defer rows.Close()
-
-	cols, _ := rows.Columns()
-
-	for rows.Next() {
-		columns := make([]any, len(cols))
-		columnPointers := make([]any, len(cols))
-		for i, _ := range columns {
-			columnPointers[i] = &columns[i]
-		}
-
-		if err := rows.Scan(columnPointers...); err != nil {
-			log.Fatalf("scan %v", err)
-		}
-
-		// Create our map, and retrieve the value for each column from the pointers slice,
-		// storing it in the map with the name of the column as the key.
-		m := make(map[string]any)
-		for i, colName := range cols {
-			val := columnPointers[i].(*any)
-			m[colName] = *val
-		}
-
-		json, _ := json.Marshal(m)
+	for _, row := range rows {
+		json, _ := json.Marshal(row)
 		http.Post(a.Notify, "application/json", bytes.NewBuffer(json))
 	}
 }
