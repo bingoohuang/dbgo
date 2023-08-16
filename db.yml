@@ -1,0 +1,10 @@
+---
+actions:
+  - query: select 1
+    dbURL: mysql://root:root@127.0.0.1:3306/mysql
+    duration: 1h
+    notify: http://127.0.0.1:5003/warn?key=1
+  - query: select 1
+    dbURL: mysql://root:root@127.0.0.1:3306/mysql
+    duration: 1h
+    notify: http://127.0.0.1:5003/warn?key=1
